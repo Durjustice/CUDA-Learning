@@ -16,7 +16,7 @@
 template <typename T>
 void alloc_bytes(T &ptr, size_t num_bytes){
 
-  ptr = (T)malloc(num_bytes);
+  cudaMallocManaged(&ptr, num_bytes);
 }
 
 __global__ void inc(int *array, size_t n){
@@ -31,17 +31,16 @@ const size_t  ds = 32ULL*1024ULL*1024ULL;
 
 int main(){
 
-  int *h_array, *d_array;
+  int *h_array;
   alloc_bytes(h_array, ds*sizeof(h_array[0]));
-  cudaMalloc(&d_array, ds*sizeof(d_array[0]));
-  cudaCheckErrors("cudaMalloc Error");
+  cudaCheckErrors("cudaMallocManaged Error");
   memset(h_array, 0, ds*sizeof(h_array[0]));
-  cudaMemcpy(d_array, h_array, ds*sizeof(h_array[0]), cudaMemcpyHostToDevice);
-  cudaCheckErrors("cudaMemcpy H->D Error");
-  inc<<<256, 256>>>(d_array, ds);
+  cudaMemPrefetchAsync(h_array, ds*sizeof(h_array[0]), 0);
+  inc<<<256, 256>>>(h_array, ds);
   cudaCheckErrors("kernel launch error");
-  cudaMemcpy(h_array, d_array, ds*sizeof(h_array[0]), cudaMemcpyDeviceToHost);
-  cudaCheckErrors("kernel execution or cudaMemcpy D->H Error");
+  cudaMemPrefetchAsync(h_array, ds*sizeof(h_array[0]), cudaCpuDeviceId);
+  cudaDeviceSynchronize();
+  cudaCheckErrors("kernel execution error");
   for (int i = 0; i < ds; i++) 
     if (h_array[i] != 1) {printf("mismatch at %d, was: %d, expected: %d\n", i, h_array[i], 1); return -1;}
   printf("success!\n"); 
