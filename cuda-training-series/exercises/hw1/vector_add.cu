@@ -36,7 +36,7 @@ int main(){
     h_C[i] = 0;}
   cudaMalloc(&d_A, DSIZE*sizeof(float));  // allocate device space for vector A
   cudaMalloc(&d_B, DSIZE*sizeof(float));  // allocate device space for vector B
-  cudaMalloc(&d_B, DSIZE*sizeof(float));  // allocate device space for vector C
+  cudaMalloc(&d_C, DSIZE*sizeof(float));  // allocate device space for vector C
   cudaCheckErrors("cudaMalloc failure"); // error checking
   // copy vector A to device:
   cudaMemcpy(d_A, h_A, DSIZE*sizeof(float), cudaMemcpyHostToDevice);
